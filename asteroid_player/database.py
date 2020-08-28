@@ -1,35 +1,38 @@
 import asyncio
-from rethinkdb import r
-from rethinkdb.errors import ReqlNonExistenceError
+import pymongo
+import logging
 
 
 class Database:
 
     def __init__(self):
-        self.conn = r.connect()
+        self.client = pymongo.MongoClient('localhost', 27017)
+        self.db = self.client.test
 
     async def next_song(self):
         """ gets next song, removes it from queue and adds to history """
         song = await self._fetch_from_queue()
 
         # remove from queue
-        r.table('queue').get(song['id']).delete().run(self.conn)
+        self.db.queue.remove(song.get('_id'))
 
         # add to history, after changing id -> song_id to avoid conflicts
-        song['song_id'] = song.pop('id')
-        r.table('history').insert(song).run(self.conn)
+        song['song_id'] = song.pop('_id')
+        self.db.history.insert_one(song)
 
         return song
 
 
     async def _fetch_from_queue(self):
         """ get next item from queue, else waits until one available """
-        try: 
-            top = r.table('queue').max('votes').run(self.conn)
-        except ReqlNonExistenceError:
-            # queue empty
-            change = r.table('queue').changes().run(self.conn)
-            top = next(change)['new_val'] 
-
-        # not wrapped in finally incase unknown error
-        return top
+        while True:
+            await asyncio.sleep(1)
+            try:
+                item = self.db.queue.find({}).sort('vote', -1).limit(1).next()
+            except StopIteration as e:
+                logging.info("No song in queue.")
+            except Exception as e:
+                logging.error(e)
+            else:
+                # logging.info(f"Fetched song from queue {item}")
+                return item
