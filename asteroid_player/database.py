@@ -28,7 +28,7 @@ class Database:
         while True:
             await asyncio.sleep(1)
             try:
-                item = self.db.queue.find({}).sort('vote', -1).limit(1).next()
+                item = self.db.queue.find({}).sort('votes', -1).limit(1).next()
             except StopIteration as e:
                 logging.info("No song in queue.")
             except Exception as e:

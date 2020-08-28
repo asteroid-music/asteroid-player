@@ -11,7 +11,7 @@ except:
 
 async def play_song(song):
     """ use vlc to play song; return once done """
-    pl = vlc.MediaPlayer(song['file'])
+    pl = vlc.MediaPlayer(".." + song['file'])
     pl.play()
     await asyncio.sleep(song['duration'])
     return
