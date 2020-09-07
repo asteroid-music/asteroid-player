@@ -1,8 +1,18 @@
+import yaml
+with open("./config.yml", "r") as ymlfile:
+    cfg = yaml.load(
+        ymlfile, 
+        Loader=yaml.SafeLoader
+    )
+
 import logging
+logcfg = cfg["logging"]
 logging.basicConfig(
-    format='%(asctime)s %(levelname)s: %(message)s', 
-    datefmt='%d/%m/%Y %H:%M:%S',
-    level=logging.INFO
+    format=logcfg["format"], 
+    datefmt=logcfg["datefmt"],
+    level=logging.__getattribute__(
+        logcfg["level"].upper()
+    )
 )
 
 import asyncio
@@ -16,7 +26,7 @@ class Cycler:
         playback """
 
     def __init__(self):
-        self.db = Database()
+        self.db = Database(cfg['database'])
 
     async def cycle(self):
         """ get song and play """

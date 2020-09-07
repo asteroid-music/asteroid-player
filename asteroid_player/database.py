@@ -5,8 +5,8 @@ import logging
 
 class Database:
 
-    def __init__(self):
-        self.client = pymongo.MongoClient('localhost', 27017)
+    def __init__(self, db):
+        self.client = pymongo.MongoClient('127.0.0.1', 27017)
         self.db = self.client.test
 
     async def next_song(self):
