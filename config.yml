@@ -1,8 +1,8 @@
-database: "../asteroid-flask/test.db"
+database: "mongodb://localhost:27017"
 
 logging:
   level: INFO
   format: "%(asctime)s %(levelname)s: %(message)s"
   datefmt: "%d/%m/%Y %H:%M:%S"
 
-musicfiles: "../asteroid-flask/musicfiles"
+musicfiles: "../asteroid-api"

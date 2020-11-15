@@ -1,44 +1,46 @@
 import asyncio
-import sqlite3
 import logging
+import motor.motor_asyncio
 
 
 class Database:
-
     def __init__(self, db):
-        self.conn = sqlite3.connect(db)
+        self._db = db
+
+    async def connect(self):
+        client = motor.motor_asyncio.AsyncIOMotorClient(self._db)
+        self.collection = client.dev.get_collection("queue")
 
     async def next_song(self):
         """ gets next song, removes it from queue and adds to history """
-        file, duration, _id = await self._fetch_from_queue()
+        queue_item = await self._fetch_from_queue()
+        song = queue_item["song"]
+        logging.info(f"Fetched item {song}")
 
-        # remove from queue
-        self.conn.execute("DELETE FROM queue WHERE id=?", (_id,))
+        # remove it from queue
+        result = await self.collection.update_one(
+            {"name": "queue"}, {"$pull": {"songs": {"song._id": song["_id"]}}}
+        )
+        if result.modified_count > 0:
+            logging.info("Removed song from queue.")
+        else:
+            logging.warning("Failed to remove song from queue.")
 
-        # add to history, after changing id -> song_id to avoid conflicts
-        # song['song_id'] = song.pop('_id')
-        # self.db.history.insert_one(song)
-
-        self.conn.commit()
-        return {"file":file, "duration":duration}
-
+        return {"file": song["file"], "duration": song["duration"]}
 
     async def _fetch_from_queue(self):
         """ get next item from queue, else waits until one available """
         while True:
             await asyncio.sleep(1)
-            item = self._query_database()
+            item = await self._query_database()
             if item is not None:
                 return item
             else:
                 logging.info("No song in queue.")
 
-    def _query_database(self):
-        query = self.conn.execute(
-            (
-                "SELECT music.file, music.duration, queue.id FROM queue "
-                "JOIN music ON queue.song_id = music.id "
-                "ORDER BY queue.votes DESC"
-            )
-        )
-        return query.fetchone()
+    async def _query_database(self):
+        queue = await self.collection.find_one({"name": "queue"})
+        if queue != None and len(queue["songs"]) > 0:
+            return sorted(queue["songs"], key=lambda i: i["votes"], reverse=True)[0]
+        else:
+            return None
