@@ -16,4 +16,4 @@ Uses [playsound](https://github.com/TaylorSMarks/playsound), which may require a
 
 - OSX
 
-You'll also need [`pyobjc`](https://github.com/ronaldoussoren/pyobjc)
+You'll also need [`pyobjc`](https://github.com/ronaldoussoren/pyobjc).
