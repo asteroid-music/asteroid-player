@@ -10,4 +10,3 @@ async def play_song(root, song):
     logging.info("Playing {}".format(song["file"]))
     playsound(os.path.join(root, song["file"]))
     logging.info("Playback finished.")
-    await asyncio.sleep(song["duration"])
